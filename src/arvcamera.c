@@ -74,6 +74,12 @@ struct _ArvCameraPrivate {
 	ArvCameraSeries series;
 };
 
+enum
+{
+	PROP_0,
+	PROP_CAMERA_DEVICE
+};
+
 /**
  * arv_camera_create_stream:
  * @camera: a #ArvCamera
@@ -845,43 +851,14 @@ arv_camera_get_device (ArvCamera *camera)
 ArvCamera *
 arv_camera_new (const char *name)
 {
-	ArvCamera *camera;
 	ArvDevice *device;
-	ArvCameraVendor vendor;
-	ArvCameraSeries series;
-	const char *vendor_name;
-	const char *model_name;
 
 	device = arv_open_device (name);
 
 	if (!ARV_IS_DEVICE (device))
 		return NULL;
 
-	camera = g_object_new (ARV_TYPE_CAMERA, NULL);
-	camera->priv->device = device;
-	camera->priv->genicam = arv_device_get_genicam (device);
-
-	vendor_name = arv_camera_get_vendor_name (camera);
-	model_name = arv_camera_get_model_name (camera);
-
-	if (g_strcmp0 (vendor_name, "Basler") == 0) {
-		vendor = ARV_CAMERA_VENDOR_BASLER;
-		if (g_str_has_prefix (model_name, "acA"))
-			series = ARV_CAMERA_SERIES_BASLER_ACE;
-		else if (g_str_has_prefix (model_name, "scA"))
-			series = ARV_CAMERA_SERIES_BASLER_SCOUT;
-		else
-			series = ARV_CAMERA_SERIES_BASLER_OTHER;
-	} else if (g_strcmp0 (vendor_name, "Prosilica") == 0) {
-		vendor = ARV_CAMERA_VENDOR_PROSILICA;
-		series = ARV_CAMERA_SERIES_PROSILICA_OTHER;
-	} else {
-		vendor = ARV_CAMERA_VENDOR_UNKNOWN;
-		series = ARV_CAMERA_SERIES_UNKNOWN;
-	}
-
-	camera->priv->vendor = vendor;
-	camera->priv->series = series;
+	camera = g_object_new (ARV_TYPE_CAMERA, "device", device, NULL);
 
 	return camera;
 }
@@ -903,6 +880,72 @@ arv_camera_finalize (GObject *object)
 }
 
 static void
+arv_camera_set_property (GObject *object, guint prop_id, const GValue *value, GParamSpec *pspec)
+{
+	ArvCamera *camera = ARV_CAMERA (object);
+
+	switch (prop_id)
+	{
+		case PROP_CAMERA_DEVICE:
+		{
+			ArvDevice *device;
+			ArvCameraVendor vendor;
+			ArvCameraSeries series;
+			const char *vendor_name;
+			const char *model_name;
+
+			device = g_value_get_object (value);
+
+			camera->priv->device = device;
+			camera->priv->genicam = arv_device_get_genicam (device);
+
+			vendor_name = arv_camera_get_vendor_name (camera);
+			model_name = arv_camera_get_model_name (camera);
+
+			if (g_strcmp0 (vendor_name, "Basler") == 0) {
+				vendor = ARV_CAMERA_VENDOR_BASLER;
+				if (g_str_has_prefix (model_name, "acA"))
+					series = ARV_CAMERA_SERIES_BASLER_ACE;
+				else if (g_str_has_prefix (model_name, "scA"))
+					series = ARV_CAMERA_SERIES_BASLER_SCOUT;
+				else
+					series = ARV_CAMERA_SERIES_BASLER_OTHER;
+			} else if (g_strcmp0 (vendor_name, "Prosilica") == 0) {
+				vendor = ARV_CAMERA_VENDOR_PROSILICA;
+				series = ARV_CAMERA_SERIES_PROSILICA_OTHER;
+			} else {
+				vendor = ARV_CAMERA_VENDOR_UNKNOWN;
+				series = ARV_CAMERA_SERIES_UNKNOWN;
+			}
+
+			camera->priv->vendor = vendor;
+			camera->priv->series = series;
+
+			break;
+		}
+		default:
+			G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+			break;
+	}
+}
+
+static void
+arv_camera_get_property (GObject *object, guint prop_id, GValue *value, GParamSpec *pspec)
+{
+	ArvCamera *camera = ARV_CAMERA (object);
+
+	switch (prop_id)
+	{
+		case PROP_CAMERA_DEVICE:
+            g_value_set_object (value, camera->priv->device);
+            break;
+		default:
+			G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+			break;
+	}
+}
+
+static void
 arv_camera_class_init (ArvCameraClass *camera_class)
 {
 	GObjectClass *object_class = G_OBJECT_CLASS (camera_class);
@@ -912,6 +955,16 @@ arv_camera_class_init (ArvCameraClass *camera_class)
 	parent_class = g_type_class_peek_parent (camera_class);
 
 	object_class->finalize = arv_camera_finalize;
+	object_class->set_property = arv_camera_set_property;
+	object_class->get_property = arv_camera_get_property;
+
+	g_object_class_install_property (object_class,
+									 PROP_CAMERA_DEVICE,
+									 g_param_spec_boolean ("device",
+														   "device",
+														   "the device associated with this camera",
+														   ARV_TYPE_DEVICE,
+														   G_PARAM_READABLE | G_PARAM_CONSTRUCT_ONLY));
 }
 
 G_DEFINE_TYPE (ArvCamera, arv_camera, G_TYPE_OBJECT)
