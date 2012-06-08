@@ -851,6 +851,7 @@ arv_camera_get_device (ArvCamera *camera)
 ArvCamera *
 arv_camera_new (const char *name)
 {
+	ArvCamera *camera;
 	ArvDevice *device;
 
 	device = arv_open_device (name);
