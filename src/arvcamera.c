@@ -976,11 +976,11 @@ arv_camera_class_init (ArvCameraClass *camera_class)
 
 	g_object_class_install_property (object_class,
 									 PROP_CAMERA_DEVICE,
-									 g_param_spec_boolean ("device",
-														   "device",
-														   "the device associated with this camera",
-														   ARV_TYPE_DEVICE,
-														   G_PARAM_READABLE | G_PARAM_CONSTRUCT_ONLY));
+									 g_param_spec_object ("device",
+														  "device",
+														  "the device associated with this camera",
+														  ARV_TYPE_DEVICE,
+														  G_PARAM_READABLE | G_PARAM_WRITABLE | G_PARAM_CONSTRUCT_ONLY));
 }
 
 G_DEFINE_TYPE (ArvCamera, arv_camera, G_TYPE_OBJECT)
