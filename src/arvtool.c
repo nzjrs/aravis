@@ -3,6 +3,8 @@
 #include <string.h>
 #include <stdio.h>
 
+static ArvInterface *interface;
+
 static void
 arv_tool_list_features (ArvGc *genicam, const char *feature, gboolean show_description, int level)
 {
@@ -64,7 +66,7 @@ arv_tool_execute_command (int argc, char **argv, const char *device_name)
 	ArvGc *genicam;
 	const char *command = argv[1];
 
-	device = arv_open_device (device_name);
+	device = arv_interface_open_device (interface, device_name);
 	if (!ARV_IS_DEVICE (device)) {
 		if (device_name != NULL)
 			printf ("Device '%s' not found\n", device_name);
@@ -232,8 +234,9 @@ main (int argc, char **argv)
 
 	arv_debug_enable (arv_option_debug_domains);
 
-	arv_update_device_list ();
-	n_devices = arv_get_n_devices ();
+	interface = arv_gv_interface_get_instance ();
+	arv_interface_update_device_list (interface);
+	n_devices = arv_interface_get_n_devices (interface);
 
 	if (arv_option_device_name != NULL)
 		pattern = g_pattern_spec_new (arv_option_device_name);
@@ -241,15 +244,17 @@ main (int argc, char **argv)
 		pattern = g_pattern_spec_new ("*");
 
 	for (i = 0; i < n_devices; i++) {
-		const char *device_id;
+		const char *device_id, *device_phys_id, *device_address;
 
-		device_id = arv_get_device_id (i);
+		device_id = arv_interface_get_device_id (interface, i);
+		device_phys_id = arv_interface_get_device_physical_id (interface, i);
+		device_address = arv_interface_get_device_address (interface, i);
 
 		if (g_pattern_match_string (pattern, device_id)) {
 			if (argc >= 2)
 				arv_tool_execute_command (argc, argv, device_id);
 			else
-				printf ("%s\n", device_id);
+				printf ("%s (%s @ %s)\n", device_id, device_phys_id, device_address);
 			count++;
 		}
 	}
