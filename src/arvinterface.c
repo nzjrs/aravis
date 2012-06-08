@@ -148,6 +148,8 @@ arv_interface_get_device_physical_id (ArvInterface *interface, unsigned int inde
  *
  * Prior to this call the @arv_interface_update_device_list
  * function must be called.
+ *
+ * since: 0.1.14
  **/
 
 const char *
