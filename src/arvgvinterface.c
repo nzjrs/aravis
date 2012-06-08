@@ -336,7 +336,7 @@ arv_gv_interface_update_device_list (ArvInterface *interface, GArray *device_ids
 
 		ids->device = g_strdup (key);
 		ids->physical = g_strdup (infos->mac_string);
-		device_address = _device_infos_to_ginetaddress (device_infos);
+		device_address = _device_infos_to_ginetaddress (infos);
 		ids->address = g_inet_address_to_string (device_address);
 		g_object_unref (device_address);
 
