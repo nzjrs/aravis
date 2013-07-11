@@ -51,6 +51,9 @@
 #include <arvdevice.h>
 #include <arvenums.h>
 
+#define CHECK_PRIV(_camera) \
+    printf("gain_raw: %d exposure_abs: %d\n", _camera->priv->use_gain_raw, _camera->priv->use_exposure_time_abs);
+
 /**
  * ArvCameraVendor:
  * @ARV_CAMERA_VENDOR_UNKNOWN: unknown camera vendor
@@ -72,7 +75,8 @@ typedef enum {
 	ARV_CAMERA_SERIES_BASLER_SCOUT,
 	ARV_CAMERA_SERIES_BASLER_OTHER,
 	ARV_CAMERA_SERIES_PROSILICA_OTHER,
-	ARV_CAMERA_SERIES_TIS
+	ARV_CAMERA_SERIES_TIS,
+    ARV_CAMERA_SERIES_BASLER_PILOT
 } ArvCameraSeries;
 
 static GObjectClass *parent_class = NULL;
@@ -899,12 +903,13 @@ arv_camera_set_exposure_time (ArvCamera *camera, double exposure_time_us)
 			arv_device_set_integer_feature_value (camera->priv->device, "ExposureTimeRaw", 1);
 			break;
 		case ARV_CAMERA_SERIES_BASLER_ACE:
+        case ARV_CAMERA_SERIES_BASLER_PILOT:
 		default:
-			if (camera->priv->use_exposure_time_abs)
+//			if (camera->priv->use_exposure_time_abs)
 				arv_device_set_float_feature_value (camera->priv->device, "ExposureTimeAbs", exposure_time_us);
-			else
-				arv_device_set_float_feature_value (camera->priv->device, "ExposureTime", exposure_time_us);
-			break;
+//			else
+//				arv_device_set_float_feature_value (camera->priv->device, "ExposureTime", exposure_time_us);
+//			break;
 	}
 }
 
@@ -922,10 +927,10 @@ arv_camera_get_exposure_time (ArvCamera *camera)
 {
 	g_return_val_if_fail (ARV_IS_CAMERA (camera), 0.0);
 
-	if (camera->priv->use_exposure_time_abs)
+//	if (camera->priv->use_exposure_time_abs)
 		return arv_device_get_float_feature_value (camera->priv->device, "ExposureTimeAbs");
 
-	return arv_device_get_float_feature_value (camera->priv->device, "ExposureTime");
+//	return arv_device_get_float_feature_value (camera->priv->device, "ExposureTime");
 }
 
 /**
@@ -951,6 +956,7 @@ arv_camera_get_exposure_time_bounds (ArvCamera *camera, double *min, double *max
 			arv_device_get_float_feature_bounds (camera->priv->device, "ExposureTimeBaseAbs", min, max);
 			break;
 		case ARV_CAMERA_SERIES_BASLER_ACE:
+        case ARV_CAMERA_SERIES_BASLER_PILOT:
 			arv_device_get_integer_feature_bounds (camera->priv->device, "ExposureTimeRaw",
 							       &int_min,
 							       &int_max);
@@ -960,10 +966,10 @@ arv_camera_get_exposure_time_bounds (ArvCamera *camera, double *min, double *max
 				*max = int_max;
 			break;
 		default:
-			if (camera->priv->use_exposure_time_abs)
+//			if (camera->priv->use_exposure_time_abs)
 				arv_device_get_float_feature_bounds (camera->priv->device, "ExposureTimeAbs", min, max);
-			else
-				arv_device_get_float_feature_bounds (camera->priv->device, "ExposureTime", min, max);
+//			else
+//				arv_device_get_float_feature_bounds (camera->priv->device, "ExposureTime", min, max);
 			break;
 	}
 }
@@ -1023,10 +1029,10 @@ arv_camera_set_gain (ArvCamera *camera, double gain)
 	if (gain < 0)
 		return;
 
-	if (camera->priv->use_gain_raw)
+//	if (camera->priv->use_gain_raw)
 		arv_device_set_integer_feature_value (camera->priv->device, "GainRaw", gain);
-	else
-		arv_device_set_float_feature_value (camera->priv->device, "Gain", gain);
+//	else
+//		arv_device_set_float_feature_value (camera->priv->device, "Gain", gain);
 }
 
 /**
@@ -1043,10 +1049,10 @@ arv_camera_get_gain (ArvCamera *camera)
 {
 	g_return_val_if_fail (ARV_IS_CAMERA (camera), 0.0);
 
-	if (camera->priv->use_gain_raw)
+//	if (camera->priv->use_gain_raw)
 		return arv_device_get_integer_feature_value (camera->priv->device, "GainRaw");
 
-	return arv_device_get_float_feature_value (camera->priv->device, "Gain");
+//	return arv_device_get_float_feature_value (camera->priv->device, "Gain");
 }
 
 /**
@@ -1067,7 +1073,7 @@ arv_camera_get_gain_bounds (ArvCamera *camera, double *min, double *max)
 
 	g_return_if_fail (ARV_IS_CAMERA (camera));
 
-	if (camera->priv->use_gain_raw) {
+//	if (camera->priv->use_gain_raw) {
 		arv_device_get_integer_feature_bounds (camera->priv->device, "GainRaw", &min64, &max64);
 
 		if (min != NULL)
@@ -1075,10 +1081,10 @@ arv_camera_get_gain_bounds (ArvCamera *camera, double *min, double *max)
 		if (max != NULL)
 			*max = max64;
 
-		return;
-	}
+//		return;
+//	}
 
-	arv_device_get_float_feature_bounds (camera->priv->device, "Gain", min, max);
+//	arv_device_get_float_feature_bounds (camera->priv->device, "Gain", min, max);
 }
 
 /**
@@ -1196,10 +1202,10 @@ arv_camera_is_exposure_time_available (ArvCamera *camera)
 {
 	g_return_val_if_fail (ARV_IS_CAMERA (camera), FALSE);
 
-	if (camera->priv->use_exposure_time_abs)
+//	if (camera->priv->use_exposure_time_abs)
 		return arv_device_get_feature (camera->priv->device, "ExposureTimeAbs") != NULL;
 
-	return arv_device_get_feature (camera->priv->device, "ExposureTime") != NULL;
+//	return arv_device_get_feature (camera->priv->device, "ExposureTime") != NULL;
 }
 
 /**
@@ -1233,10 +1239,10 @@ arv_camera_is_gain_available (ArvCamera *camera)
 {
 	g_return_val_if_fail (ARV_IS_CAMERA (camera), FALSE);
 
-	if (camera->priv->use_gain_raw)
+//	if (camera->priv->use_gain_raw)
 		return arv_device_get_feature (camera->priv->device, "GainRaw") != NULL;
 
-	return arv_device_get_feature (camera->priv->device, "Gain") != NULL;
+//	return arv_device_get_feature (camera->priv->device, "Gain") != NULL;
 }
 
 /**
@@ -1283,6 +1289,11 @@ arv_camera_new (const char *name)
 
 	camera->priv->use_gain_raw = !ARV_IS_GC_FLOAT (arv_device_get_feature (device, "Gain"));
 	camera->priv->use_exposure_time_abs = !ARV_IS_GC_FLOAT (arv_device_get_feature (device, "ExposureTime"));
+
+    CHECK_PRIV(camera);
+
+    //ArvGcNode *node = arv_device_get_feature (device, "TriggerSource"); 
+    //printf("TS: %d\n", node && ARV_IS_GC_ENUMERATION (node));
 
 	return camera;
 }
@@ -1335,6 +1346,8 @@ arv_camera_constructor (GType gtype, guint n_properties, GObjectConstructParam *
 			series = ARV_CAMERA_SERIES_BASLER_ACE;
 		else if (g_str_has_prefix (model_name, "scA"))
 			series = ARV_CAMERA_SERIES_BASLER_SCOUT;
+		else if (g_str_has_prefix (model_name, "piA"))
+			series = ARV_CAMERA_SERIES_BASLER_PILOT;
 		else
 			series = ARV_CAMERA_SERIES_BASLER_OTHER;
 	} else if (g_strcmp0 (vendor_name, "Prosilica") == 0) {
